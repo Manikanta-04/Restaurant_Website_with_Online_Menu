@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMBER — Fine Dining Experience</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --fire: #FF4500;
+    --amber: #FF8C00;
+    --gold: #FFD700;
+    --cream: #FFF8F0;
+    --charcoal: #1A1108;
+    --smoke: #2D1F0E;
+    --ember: #C0392B;
+    --glow: rgba(255,140,0,0.3);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--charcoal);
+    color: var(--cream);
+    font-family: 'Jost', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom Cursor */
+  .cursor {
+    width: 12px; height: 12px;
+    background: var(--amber);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: screen;
+  }
+  .cursor-trail {
+    width: 40px; height: 40px;
+    border: 1px solid rgba(255,140,0,0.5);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9998;
+    transition: left 0.15s ease, top 0.15s ease;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; width: 100%;
+    z-index: 100;
+    padding: 1.5rem 3rem;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(to bottom, rgba(26,17,8,0.95), transparent);
+    backdrop-filter: blur(2px);
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), var(--fire));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: 0.15em;
+  }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    color: var(--cream); opacity: 0.7;
+    text-decoration: none; font-weight: 300; letter-spacing: 0.1em;
+    font-size: 0.85rem; text-transform: uppercase;
+    transition: opacity 0.3s, color 0.3s;
+  }
+  .nav-links a:hover { opacity: 1; color: var(--amber); }
+  .nav-reserve {
+    background: linear-gradient(135deg, var(--fire), var(--amber));
+    color: #fff; padding: 0.6rem 1.5rem;
+    border: none; border-radius: 2px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: none; transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 20px rgba(255,69,0,0.4);
+  }
+  .nav-reserve:hover { transform: scale(1.05); box-shadow: 0 0 35px rgba(255,69,0,0.6); }
+
+  /* HERO */
+  .hero {
+    height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 80%, rgba(192,57,43,0.3) 0%, var(--charcoal) 70%);
+  }
+
+  /* 3D SCENE - CSS-only */
+  .scene-3d {
+    position: absolute;
+    width: 600px; height: 600px;
+    perspective: 1000px;
+    right: 5%; top: 50%; transform: translateY(-50%);
+  }
+  .plate-stage {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: rotatePlate 20s linear infinite;
+  }
+  @keyframes rotatePlate {
+    from { transform: rotateY(0deg) rotateX(10deg); }
+    to { transform: rotateY(360deg) rotateX(10deg); }
+  }
+
+  /* Main plate */
+  .plate {
+    position: absolute;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) rotateX(75deg);
+    background: radial-gradient(ellipse at 30% 30%, #f0ede8, #c8c0b4);
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.8),
+      inset 0 5px 20px rgba(255,255,255,0.3),
+      0 0 100px rgba(255,140,0,0.1);
+  }
+  .plate::before {
+    content: '';
+    position: absolute;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    border: 2px solid rgba(255,255,255,0.4);
+  }
+  .plate::after {
+    content: '';
+    position: absolute;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    background: radial-gradient(ellipse at 40% 30%, #8B0000, #3D0000);
+    box-shadow: 0 5px 20px rgba(139,0,0,0.8), 0 0 30px rgba(255,69,0,0.4);
+  }
+
+  /* Floating food elements */
+  .food-item {
+    position: absolute;
+    border-radius: 50%;
+    animation: float 3s ease-in-out infinite;
+  }
+  .food-1 {
+    width: 80px; height: 80px;
+    background: radial-gradient(ellipse at 30% 25%, #ff9966, #c0392b);
+    top: 10%; left: 15%;
+    box-shadow: 0 10px 40px rgba(192,57,43,0.6), 0 0 20px rgba(255,140,0,0.3);
+    animation-delay: 0s;
+    border-radius: 60% 40% 50% 70% / 50% 60% 40% 50%;
+  }
+  .food-2 {
+    width: 50px; height: 50px;
+    background: radial-gradient(ellipse at 40% 30%, #90EE90, #228B22);
+    top: 70%; left: 80%;
+    box-shadow: 0 8px 25px rgba(34,139,34,0.5);
+    animation-delay: 1s;
+    border-radius: 40% 60% 70% 30% / 60% 40% 60% 40%;
+  }
+  .food-3 {
+    width: 60px; height: 35px;
+    background: radial-gradient(ellipse at 40% 30%, #FFD700, #B8860B);
+    top: 80%; left: 20%;
+    box-shadow: 0 8px 25px rgba(184,134,11,0.5);
+    animation-delay: 0.5s;
+    border-radius: 50%;
+  }
+  .food-4 {
+    width: 45px; height: 45px;
+    background: radial-gradient(ellipse at 35% 25%, #FF6347, #8B0000);
+    top: 15%; left: 75%;
+    animation-delay: 1.5s;
+    box-shadow: 0 8px 20px rgba(139,0,0,0.6);
+    border-radius: 45% 55% 50% 50% / 50% 50% 55% 45%;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+  }
+
+  /* Orbit rings */
+  .orbit {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid;
+    top: 50%; left: 50%;
+    transform-style: preserve-3d;
+  }
+  .orbit-1 {
+    width: 380px; height: 380px;
+    border-color: rgba(255,140,0,0.2);
+    margin: -190px 0 0 -190px;
+    animation: orbitSpin 15s linear infinite;
+  }
+  .orbit-2 {
+    width: 450px; height: 450px;
+    border-color: rgba(255,69,0,0.15);
+    margin: -225px 0 0 -225px;
+    animation: orbitSpin 25s linear infinite reverse;
+  }
+  .orbit-3 {
+    width: 520px; height: 520px;
+    border-color: rgba(255,215,0,0.1);
+    margin: -260px 0 0 -260px;
+    animation: orbitSpin 35s linear infinite;
+  }
+  @keyframes orbitSpin {
+    from { transform: rotateX(75deg) rotate(0deg); }
+    to { transform: rotateX(75deg) rotate(360deg); }
+  }
+
+  /* Orbit dots */
+  .orbit-dot {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--amber);
+    top: -4px; left: 50%; margin-left: -4px;
+    box-shadow: 0 0 10px var(--amber);
+  }
+
+  /* Particles / embers */
+  .ember-particle {
+    position: absolute;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--amber);
+    animation: emberRise linear infinite;
+    opacity: 0;
+  }
+  @keyframes emberRise {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-200px) scale(0); opacity: 0; }
+  }
+
+  .hero-content {
+    position: relative; z-index: 2;
+    max-width: 550px;
+    margin-left: 8%;
+    animation: fadeInUp 1s ease both;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-tag {
+    font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .hero-tag::before {
+    content: ''; display: inline-block;
+    width: 40px; height: 1px; background: var(--amber);
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3.5rem, 6vw, 5.5rem);
+    font-weight: 900; line-height: 1.05;
+    margin-bottom: 1.5rem;
+  }
+  .hero-title .line1 { display: block; }
+  .hero-title .line2 {
+    display: block; font-style: italic; font-weight: 400;
+    background: linear-gradient(90deg, var(--gold), var(--fire));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    font-size: 1rem; font-weight: 300; line-height: 1.8;
+    opacity: 0.7; margin-bottom: 3rem; max-width: 400px;
+  }
+  .hero-cta {
+    display: flex; gap: 1.5rem; align-items: center;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--fire), var(--amber));
+    color: #fff; padding: 1rem 2.5rem;
+    border: none; border-radius: 2px;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.85rem; letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: none; transition: all 0.3s;
+    box-shadow: 0 10px 40px rgba(255,69,0,0.4);
+    text-decoration: none; display: inline-block;
+  }
+  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 20px 60px rgba(255,69,0,0.5); }
+  .btn-ghost {
+    color: var(--cream); opacity: 0.7;
+    font-size: 0.85rem; letter-spacing: 0.1em;
+    text-decoration: none;
+    display: flex; align-items: center; gap: 0.5rem;
+    transition: opacity 0.3s, gap 0.3s;
+  }
+  .btn-ghost:hover { opacity: 1; gap: 0.8rem; }
+  .btn-ghost::after { content: '→'; }
+
+  /* Stats strip */
+  .stats-strip {
+    background: linear-gradient(90deg, rgba(255,69,0,0.1), rgba(255,140,0,0.1));
+    border-top: 1px solid rgba(255,140,0,0.15);
+    border-bottom: 1px solid rgba(255,140,0,0.15);
+    padding: 2rem 4rem;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    text-align: center;
+  }
+  .stat { padding: 1rem; }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem; font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), var(--fire));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .stat-label { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5; margin-top: 0.3rem; }
+
+  /* Section general */
+  section { padding: 8rem 4rem; }
+  .section-tag {
+    font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .section-tag::before { content: ''; display: inline-block; width: 30px; height: 1px; background: var(--amber); }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    line-height: 1.1; margin-bottom: 1.5rem;
+  }
+  .section-title em { font-style: italic; color: var(--amber); }
+
+  /* MENU SECTION */
+  .menu-section { background: var(--smoke); }
+  .menu-header { text-align: center; margin-bottom: 5rem; }
+  .menu-tabs {
+    display: flex; justify-content: center; gap: 0;
+    margin-bottom: 4rem;
+    border: 1px solid rgba(255,140,0,0.2);
+    border-radius: 2px; overflow: hidden;
+    width: fit-content; margin: 0 auto 4rem;
+  }
+  .menu-tab {
+    padding: 0.8rem 2rem; background: transparent;
+    border: none; color: var(--cream); opacity: 0.5;
+    font-family: 'Jost', sans-serif;
+    font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: none; transition: all 0.3s;
+    border-right: 1px solid rgba(255,140,0,0.2);
+  }
+  .menu-tab:last-child { border-right: none; }
+  .menu-tab.active, .menu-tab:hover {
+    background: linear-gradient(135deg, var(--fire), var(--amber));
+    opacity: 1;
+  }
+
+  .menu-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;
+    max-width: 1200px; margin: 0 auto;
+  }
+  .menu-card {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, rgba(45,31,14,0.8), rgba(26,17,8,0.9));
+    border: 1px solid rgba(255,140,0,0.15);
+    border-radius: 4px;
+    padding: 0;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: none;
+  }
+  .menu-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 40px rgba(255,140,0,0.1);
+  }
+  .menu-card-img {
+    width: 100%; height: 220px;
+    position: relative; overflow: hidden;
+  }
+  /* 3D food item visualization in CSS */
+  .food-visual {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    perspective: 300px;
+  }
+  .food-3d {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    transform-style: preserve-3d;
+    transform: rotateX(20deg) rotateY(-20deg);
+    transition: transform 0.5s ease;
+    position: relative;
+  }
+  .menu-card:hover .food-3d { transform: rotateX(30deg) rotateY(20deg) scale(1.1); }
+
+  .food-steak {
+    background: radial-gradient(ellipse at 35% 30%, #C0392B, #6E1B1B);
+    box-shadow:
+      0 20px 40px rgba(0,0,0,0.6),
+      inset 0 5px 15px rgba(255,100,50,0.3),
+      0 0 30px rgba(192,57,43,0.4);
+    border-radius: 55% 45% 50% 50% / 45% 50% 50% 55%;
+  }
+  .food-steak::before {
+    content: '';
+    position: absolute; width: 60%; height: 25%;
+    top: 25%; left: 20%;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.07) 0px, transparent 1px, transparent 4px);
+    border-radius: 50%;
+  }
+  .food-steak::after {
+    content: '';
+    position: absolute; width: 80%; height: 80%;
+    top: 10%; left: 10%;
+    border-top: 2px solid rgba(255,140,0,0.4);
+    border-radius: 50% 50% 0 0;
+  }
+
+  .food-pasta {
+    background: radial-gradient(ellipse at 40% 30%, #F4A460, #8B4513);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(244,164,96,0.3);
+    border-radius: 50%;
+  }
+  .food-pasta::before {
+    content: ''; position: absolute;
+    width: 70%; height: 70%; top: 15%; left: 15%;
+    background: repeating-conic-gradient(rgba(255,255,255,0.1) 0deg, transparent 20deg);
+    border-radius: 50%;
+  }
+
+  .food-salmon {
+    background: radial-gradient(ellipse at 35% 25%, #FA8072, #FF4500);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(250,128,114,0.4);
+    border-radius: 40% 60% 50% 50% / 50% 50% 60% 40%;
+  }
+  .food-dessert {
+    background: radial-gradient(ellipse at 35% 25%, #FFD700, #FF8C00);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(255,215,0,0.4);
+    border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+  }
+  .food-soup {
+    background: radial-gradient(ellipse at 40% 30%, #FF8C00, #8B4513);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(255,140,0,0.3);
+    border-radius: 50%;
+  }
+  .food-salad {
+    background: radial-gradient(ellipse at 40% 30%, #90EE90, #006400);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(144,238,144,0.3);
+    border-radius: 45% 55% 50% 50% / 50% 45% 55% 50%;
+  }
+
+  /* Plate under each food */
+  .food-3d-wrap {
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .food-plate {
+    position: absolute;
+    width: 170px; height: 50px;
+    background: radial-gradient(ellipse at 30% 30%, #e8e0d8, #b0a898);
+    border-radius: 50%;
+    bottom: -15px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+    z-index: -1;
+  }
+
+  .food-bg { display: flex; align-items: center; justify-content: center; height: 100%; }
+
+  /* Colored bg per card */
+  .bg-red { background: radial-gradient(ellipse at center, rgba(139,0,0,0.3) 0%, transparent 70%); }
+  .bg-gold { background: radial-gradient(ellipse at center, rgba(184,134,11,0.3) 0%, transparent 70%); }
+  .bg-green { background: radial-gradient(ellipse at center, rgba(0,100,0,0.3) 0%, transparent 70%); }
+  .bg-orange { background: radial-gradient(ellipse at center, rgba(192,57,43,0.3) 0%, transparent 70%); }
+
+  .menu-card-body { padding: 1.5rem; }
+  .menu-card-cat {
+    font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 0.5rem;
+  }
+  .menu-card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; margin-bottom: 0.5rem;
+  }
+  .menu-card-desc { font-size: 0.85rem; opacity: 0.6; line-height: 1.6; margin-bottom: 1.2rem; }
+  .menu-card-footer { display: flex; justify-content: space-between; align-items: center; }
+  .menu-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--gold), var(--amber));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .menu-add {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--fire), var(--amber));
+    border: none; color: #fff;
+    font-size: 1.3rem; cursor: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 5px 15px rgba(255,69,0,0.4);
+  }
+  .menu-add:hover { transform: scale(1.15); box-shadow: 0 8px 25px rgba(255,69,0,0.6); }
+
+  /* SPECIAL - 3D SHOWCASE */
+  .showcase {
+    background: linear-gradient(180deg, var(--charcoal) 0%, rgba(45,31,14,0.5) 100%);
+    position: relative; overflow: hidden;
+  }
+  .showcase-inner {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6rem; align-items: center;
+    max-width: 1200px; margin: 0 auto;
+  }
+
+  /* 3D Chef's Table */
+  .chefs-table-3d {
+    position: relative;
+    width: 450px; height: 450px;
+    perspective: 800px;
+  }
+  .table-scene {
+    width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    animation: tableFloat 6s ease-in-out infinite;
+  }
+  @keyframes tableFloat {
+    0%, 100% { transform: rotateY(-15deg) rotateX(10deg); }
+    50% { transform: rotateY(15deg) rotateX(5deg); }
+  }
+
+  /* Table top */
+  .table-top {
+    position: absolute;
+    width: 350px; height: 200px;
+    background: linear-gradient(135deg, #4A2F1A, #2D1A0A);
+    border-radius: 12px;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%) rotateX(45deg);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.8), inset 0 2px 10px rgba(255,200,100,0.1);
+    border: 1px solid rgba(255,200,100,0.1);
+  }
+
+  /* Big dinner plate on table */
+  .dinner-plate {
+    position: absolute;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 30% 25%, #f5f0e8, #c5bfb5);
+    top: 30%; left: 50%;
+    transform: translate(-50%, -50%) rotateX(45deg);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.7), inset 0 3px 10px rgba(255,255,255,0.4);
+    z-index: 5;
+  }
+  .dinner-plate::before {
+    content: ''; position: absolute;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.35);
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+  }
+  .dinner-food {
+    position: absolute;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 35% 25%, #C0392B, #6E1B1B);
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    box-shadow: 0 5px 20px rgba(192,57,43,0.5), inset 0 3px 8px rgba(255,100,50,0.3);
+    border-radius: 55% 45% 50% 50% / 45% 50% 50% 55%;
+  }
+
+  /* Wine glass */
+  .wine-glass {
+    position: absolute;
+    right: 15%; top: 20%;
+    transform: rotateX(45deg);
+    z-index: 6;
+  }
+  .glass-stem { width: 3px; height: 60px; background: rgba(255,255,255,0.6); margin: 0 auto; }
+  .glass-base { width: 30px; height: 6px; background: rgba(255,255,255,0.5); border-radius: 50%; margin: 0 auto; }
+  .glass-cup {
+    width: 40px; height: 50px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 0 0 50% 50%;
+    margin: 0 auto;
+    background: linear-gradient(180deg, rgba(139,0,0,0.6), rgba(139,0,0,0.2));
+    position: relative; overflow: hidden;
+  }
+  .glass-cup::before {
+    content: ''; position: absolute;
+    width: 8px; height: 100%;
+    background: rgba(255,255,255,0.2);
+    left: 6px; border-radius: 50%;
+  }
+
+  /* Candle */
+  .candle-wrap {
+    position: absolute; left: 15%; top: 15%;
+    transform: rotateX(45deg); z-index: 6;
+  }
+  .candle { width: 12px; height: 50px; background: linear-gradient(to right, #e8e0d0, #d4ccbc, #e8e0d0); border-radius: 2px; margin: 0 auto; }
+  .candle-flame {
+    width: 10px; height: 18px;
+    background: radial-gradient(ellipse at 50% 80%, #FFD700, #FF8C00 50%, transparent 100%);
+    border-radius: 50% 50% 20% 20%;
+    margin: 0 auto;
+    animation: flicker 0.5s ease-in-out infinite alternate;
+    box-shadow: 0 0 15px rgba(255,200,0,0.8), 0 0 30px rgba(255,140,0,0.4);
+  }
+  @keyframes flicker {
+    from { transform: scaleX(1) scaleY(1); opacity: 1; }
+    to { transform: scaleX(0.85) scaleY(1.1) rotate(2deg); opacity: 0.9; }
+  }
+  .candle-holder { width: 20px; height: 8px; background: radial-gradient(ellipse at 30% 30%, #C0A060, #8B7030); border-radius: 50% 50% 30% 30%; margin: 0 auto; }
+
+  /* Floating sparkles */
+  .sparkle {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: sparkleFloat 4s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--gold);
+  }
+  @keyframes sparkleFloat {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+    50% { transform: translateY(-40px) scale(0.5); opacity: 0; }
+  }
+
+  .showcase-content { max-width: 480px; }
+  .showcase-content p { opacity: 0.7; line-height: 1.8; margin-bottom: 2rem; }
+  .chef-sig {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem; font-style: italic;
+    color: var(--amber); margin-top: 2rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .chef-sig::before { content: '—'; color: var(--amber); opacity: 0.5; }
+
+  /* ATMOSPHERE section */
+  .atmosphere {
+    background: var(--smoke);
+    text-align: center;
+  }
+  .atm-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;
+    max-width: 1000px; margin: 4rem auto 0;
+  }
+  .atm-card {
+    padding: 3rem 2rem;
+    background: rgba(26,17,8,0.8);
+    border: 1px solid rgba(255,140,0,0.1);
+    border-radius: 4px;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .atm-card:hover { border-color: rgba(255,140,0,0.4); transform: translateY(-5px); }
+  .atm-icon {
+    font-size: 3rem; margin-bottom: 1.5rem;
+    display: block;
+    filter: drop-shadow(0 0 15px rgba(255,140,0,0.5));
+  }
+  .atm-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; margin-bottom: 1rem;
+  }
+  .atm-card p { opacity: 0.6; font-size: 0.9rem; line-height: 1.7; }
+
+  /* RESERVATION */
+  .reservation {
+    background: radial-gradient(ellipse at center, rgba(192,57,43,0.2) 0%, var(--charcoal) 60%);
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .reservation::before {
+    content: 'EMBER';
+    position: absolute; font-family: 'Playfair Display', serif;
+    font-size: 20rem; font-weight: 900;
+    opacity: 0.03; letter-spacing: 0.1em;
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    white-space: nowrap; pointer-events: none;
+  }
+  .reservation-form {
+    display: grid; grid-template-columns: repeat(3,1fr) auto;
+    gap: 1rem; max-width: 900px; margin: 3rem auto 0;
+    align-items: end;
+  }
+  .form-group { text-align: left; }
+  .form-group label {
+    display: block; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 0.5rem;
+  }
+  .form-group input, .form-group select {
+    width: 100%; padding: 0.9rem 1rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,140,0,0.2);
+    border-radius: 2px; color: var(--cream);
+    font-family: 'Jost', sans-serif;
+    font-size: 0.9rem; cursor: none;
+    transition: border-color 0.3s;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--amber);
+    box-shadow: 0 0 20px rgba(255,140,0,0.15);
+  }
+  .form-group select option { background: var(--charcoal); }
+
+  /* FOOTER */
+  footer {
+    background: rgba(10,7,3,0.95);
+    padding: 4rem;
+    border-top: 1px solid rgba(255,140,0,0.1);
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 4rem;
+  }
+  .footer-brand .nav-logo { margin-bottom: 1.5rem; display: block; }
+  .footer-brand p { opacity: 0.5; font-size: 0.85rem; line-height: 1.8; max-width: 280px; }
+  .footer-col h4 {
+    font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 1.5rem;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col ul li { margin-bottom: 0.8rem; }
+  .footer-col ul li a { color: var(--cream); opacity: 0.5; text-decoration: none; font-size: 0.9rem; transition: opacity 0.3s; }
+  .footer-col ul li a:hover { opacity: 1; }
+  .footer-bottom {
+    text-align: center; padding: 2rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.75rem; opacity: 0.3; letter-spacing: 0.1em;
+    background: rgba(10,7,3,0.95);
+  }
+
+  /* Glow orbs */
+  .glow-orb {
+    position: fixed; border-radius: 50%;
+    pointer-events: none; z-index: 0;
+    filter: blur(80px); opacity: 0.15;
+  }
+  .glow-orb-1 {
+    width: 400px; height: 400px;
+    background: var(--fire);
+    top: -100px; right: -100px;
+    animation: orbDrift 10s ease-in-out infinite;
+  }
+  .glow-orb-2 {
+    width: 300px; height: 300px;
+    background: var(--amber);
+    bottom: 20%; left: -50px;
+    animation: orbDrift 14s ease-in-out infinite reverse;
+  }
+  @keyframes orbDrift {
+    0%, 100% { transform: translate(0,0); }
+    50% { transform: translate(30px, 30px); }
+  }
+
+  /* Scroll reveal */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* menu category content */
+  .menu-content { display: none; }
+  .menu-content.active { display: grid; grid-template-columns: repeat(3,1fr); gap: 2rem; }
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-trail" id="cursorTrail"></div>
+
+<!-- Glow orbs -->
+<div class="glow-orb glow-orb-1"></div>
+<div class="glow-orb glow-orb-2"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">EMBER</div>
+  <ul class="nav-links">
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#story">Our Story</a></li>
+    <li><a href="#atmosphere">Atmosphere</a></li>
+    <li><a href="#reserve">Reservations</a></li>
+  </ul>
+  <button class="nav-reserve">Book a Table</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <!-- 3D Scene -->
+  <div class="scene-3d">
+    <div class="plate-stage">
+      <!-- Orbit rings -->
+      <div class="orbit orbit-1"><div class="orbit-dot"></div></div>
+      <div class="orbit orbit-2"><div class="orbit-dot" style="top:auto;bottom:-4px;"></div></div>
+      <div class="orbit orbit-3"><div class="orbit-dot" style="left:auto;right:-4px;"></div></div>
+      <!-- Plate -->
+      <div class="plate"></div>
+    </div>
+    <!-- Floating food items -->
+    <div class="food-item food-1"></div>
+    <div class="food-item food-2"></div>
+    <div class="food-item food-3"></div>
+    <div class="food-item food-4"></div>
+    <!-- Ember particles -->
+    <div id="particles"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-tag">Fine Dining • Est. 2019</div>
+    <h1 class="hero-title">
+      <span class="line1">Where Fire</span>
+      <span class="line2">Meets Flavor</span>
+    </h1>
+    <p class="hero-sub">An extraordinary culinary journey where ancient wood-fire techniques meet modern gastronomy. Every dish tells a story of passion and perfection.</p>
+    <div class="hero-cta">
+      <a href="#menu" class="btn-primary">Explore Menu</a>
+      <a href="#reserve" class="btn-ghost">Reserve a Table</a>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<div class="stats-strip">
+  <div class="stat">
+    <div class="stat-num">12+</div>
+    <div class="stat-label">Years of Excellence</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">48</div>
+    <div class="stat-label">Signature Dishes</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">3★</div>
+    <div class="stat-label">Michelin Stars</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">98%</div>
+    <div class="stat-label">Guest Satisfaction</div>
+  </div>
+</div>
+
+<!-- MENU -->
+<section class="menu-section" id="menu">
+  <div class="menu-header reveal">
+    <div class="section-tag" style="justify-content:center;">Our Offerings</div>
+    <h2 class="section-title">The <em>Ember</em> Menu</h2>
+    <p style="opacity:0.6;max-width:500px;margin:0 auto;line-height:1.8;">Crafted with the finest seasonal ingredients, each plate is a masterwork of culinary art.</p>
+  </div>
+  <div class="menu-tabs reveal">
+    <button class="menu-tab active" onclick="switchTab(this,'mains')">Mains</button>
+    <button class="menu-tab" onclick="switchTab(this,'starters')">Starters</button>
+    <button class="menu-tab" onclick="switchTab(this,'desserts')">Desserts</button>
+  </div>
+
+  <!-- Mains -->
+  <div id="cat-mains" class="menu-content active">
+    <div class="menu-card reveal">
+      <div class="menu-card-img bg-red">
+        <div class="food-bg">
+          <div class="food-3d-wrap">
+            <div class="food-3d food-steak"></div>
+            <div class="food-plate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">Wood-Fire Grilled</div>
+        <h3 class="menu-card-name">Ember Wagyu Steak</h3>
+        <p class="menu-card-desc">A5 Japanese wagyu, truffle butter, charred bone marrow, aged balsamic reduction.</p>
+        <div class="menu-card-footer">
+          <div class="menu-price">$89</div>
+          <button class="menu-add">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-card reveal">
+      <div class="menu-card-img bg-gold">
+        <div class="food-bg">
+          <div class="food-3d-wrap">
+            <div class="food-3d food-salmon"></div>
+            <div class="food-plate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">Ocean Fresh</div>
+        <h3 class="menu-card-name">Atlantic Salmon Royale</h3>
+        <p class="menu-card-desc">Wild-caught salmon, saffron beurre blanc, micro herbs, caviar pearls.</p>
+        <div class="menu-card-footer">
+          <div class="menu-price">$64</div>
+          <button class="menu-add">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-card reveal">
+      <div class="menu-card-img bg-orange">
+        <div class="food-bg">
+          <div class="food-3d-wrap">
+            <div class="food-3d food-pasta"></div>
+            <div class="food-plate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">Artisanal Pasta</div>
+        <h3 class="menu-card-name">Truffle Carbonara</h3>
+        <p class="menu-card-desc">Hand-pulled spaghetti, black truffle, 24-month aged parmesan, farm egg yolk.</p>
+        <div class="menu-card-footer">
+          <div class="menu-price">$48</div>
+          <button class="menu-add">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Starters -->
+  <div id="cat-starters" class="menu-content">
+    <div class="menu-card">
+      <div class="menu-card-img bg-green">
+        <div class="food-bg">
+          <div class="food-3d-wrap">
+            <div class="food-3d food-salad"></div>
+            <div class="food-plate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">Garden Fresh</div>
+        <h3 class="menu-card-name">Heritage Burrata</h3>
+        <p class="menu-card-desc">Heirloom tomatoes, burrata, basil oil, aged balsamic, fleur de sel.</p>
+        <div class="menu-card-footer">
+          <div class="menu-price">$28</div>
+          <button class="menu-add">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="menu-card">
+      <div class="menu-card-img bg-red">
+        <div class="food-bg">
+          <div class="food-3d-wrap">
+            <div class="food-3d food-soup"></div>
+            <div class="food-plate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">Artisan Soup</div>
+        <h3 class="menu-card-name">Lobster Bisque</h3>
+        <p class="menu-card-desc">Maine lobster, cognac cream, tarragon, buttered croutons, chive oil.</p>
+        <div class="menu-card-footer">
+          <div class="menu-price">$34</div>
+          <button class="menu-add">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="menu-card">
+      <div class="menu-card-img bg-orange">
+        <div class="food-bg">
+          <div class="food-3d-wrap">
+            <div class="food-3d food-steak" style="background:radial-gradient(ellipse at 35% 30%, #FF8C00, #4A2000); border-radius:40% 60% 60% 40%;"></div>
+            <div class="food-plate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">Fire Roasted</div>
+        <h3 class="menu-card-name">Duck Liver Paté</h3>
+        <p class="menu-card-desc">Madeira jelly, toasted brioche, cornichons, fig compote.</p>
+        <div class="menu-card-footer">
+          <div class="menu-price">$32</div>
+          <button class="menu-add">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desserts -->
+  <div id="cat-desserts" class="menu-content">
+    <div class="menu-card">
+      <div class="menu-card-img bg-gold">
+        <div class="food-bg">
+          <div class="food-3d-wrap">
+            <div class="food-3d food-dessert"></div>
+            <div class="food-plate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">Sweet Finale</div>
+        <h3 class="menu-card-name">Salted Caramel Soufflé</h3>
+        <p class="menu-card-desc">Valrhona chocolate, fleur de sel caramel, vanilla bean ice cream.</p>
+        <div class="menu-card-footer">
+          <div class="menu-price">$24</div>
+          <button class="menu-add">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="menu-card">
+      <div class="menu-card-img bg-red">
+        <div class="food-bg">
+          <div class="food-3d-wrap">
+            <div class="food-3d" style="background:radial-gradient(ellipse at 35% 25%, #8B0000, #3D0000); width:120px;height:80px; border-radius:50%; box-shadow:0 20px 40px rgba(0,0,0,0.6),0 0 30px rgba(139,0,0,0.5);"></div>
+            <div class="food-plate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">Pastry Art</div>
+        <h3 class="menu-card-name">Dark Forest Opera</h3>
+        <p class="menu-card-desc">Cherry compote, dark chocolate ganache, almond joconde layers.</p>
+        <div class="menu-card-footer">
+          <div class="menu-price">$22</div>
+          <button class="menu-add">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="menu-card">
+      <div class="menu-card-img bg-gold">
+        <div class="food-bg">
+          <div class="food-3d-wrap">
+            <div class="food-3d" style="background:radial-gradient(ellipse at 40% 25%, #fffff0, #e8dcc8); width:130px;height:100px; border-radius:45% 55% 50% 50%; box-shadow:0 20px 40px rgba(0,0,0,0.6),0 0 30px rgba(255,215,0,0.3);"></div>
+            <div class="food-plate"></div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">Classic French</div>
+        <h3 class="menu-card-name">Crème Brûlée Royale</h3>
+        <p class="menu-card-desc">Madagascar vanilla, caramelized sugar crust, fresh berries.</p>
+        <div class="menu-card-footer">
+          <div class="menu-price">$19</div>
+          <button class="menu-add">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWCASE / OUR STORY -->
+<section class="showcase" id="story">
+  <div class="showcase-inner">
+    <!-- 3D table visualization -->
+    <div class="chefs-table-3d">
+      <div class="table-scene">
+        <!-- Table surface -->
+        <div class="table-top"></div>
+        <!-- Plate -->
+        <div class="dinner-plate">
+          <div class="dinner-food"></div>
+        </div>
+        <!-- Wine glass -->
+        <div class="wine-glass">
+          <div class="glass-cup"></div>
+          <div class="glass-stem"></div>
+          <div class="glass-base"></div>
+        </div>
+        <!-- Candle -->
+        <div class="candle-wrap">
+          <div class="candle-flame"></div>
+          <div class="candle"></div>
+          <div class="candle-holder"></div>
+        </div>
+        <!-- Sparkles -->
+        <div class="sparkle" style="top:20%;left:60%;animation-delay:0s;"></div>
+        <div class="sparkle" style="top:50%;left:80%;animation-delay:1s;"></div>
+        <div class="sparkle" style="top:70%;left:30%;animation-delay:2s;"></div>
+        <div class="sparkle" style="top:10%;left:40%;animation-delay:0.5s;"></div>
+        <div class="sparkle" style="top:35%;left:20%;animation-delay:1.5s;"></div>
+      </div>
+    </div>
+
+    <div class="showcase-content reveal">
+      <div class="section-tag">Our Philosophy</div>
+      <h2 class="section-title">Crafted with <em>Passion</em></h2>
+      <p>At Ember, we believe that the greatest meals are born from the oldest technique — fire. Our chefs spend years mastering the art of flame, learning to coax out flavors that no other method can achieve.</p>
+      <p>Every ingredient is sourced with obsessive care. Every technique honed to perfection. Every dish a conversation between tradition and innovation.</p>
+      <p>We invite you not just to eat, but to experience something that transcends the ordinary.</p>
+      <div class="chef-sig">Executive Chef Marcus Veldano</div>
+    </div>
+  </div>
+</section>
+
+<!-- ATMOSPHERE -->
+<section class="atmosphere" id="atmosphere">
+  <div class="reveal">
+    <div class="section-tag" style="justify-content:center;">The Ember Experience</div>
+    <h2 class="section-title">An <em>Atmosphere</em> Like No Other</h2>
+  </div>
+  <div class="atm-cards">
+    <div class="atm-card reveal">
+      <span class="atm-icon">🔥</span>
+      <h3>Live Fire Kitchen</h3>
+      <p>Watch our chefs work their magic at our open kitchen theater, where ancient wood fires create modern masterpieces before your eyes.</p>
+    </div>
+    <div class="atm-card reveal">
+      <span class="atm-icon">🍷</span>
+      <h3>Sommelier Curated</h3>
+      <p>Our master sommelier pairs each course with rare and exceptional wines from private cellars around the world.</p>
+    </div>
+    <div class="atm-card reveal">
+      <span class="atm-icon">✨</span>
+      <h3>Private Dining</h3>
+      <p>Exclusive rooms for the most intimate occasions, adorned with art and candlelight for an unforgettable evening.</p>
+    </div>
+  </div>
+</section>
+
+<!-- RESERVATION -->
+<section class="reservation" id="reserve">
+  <div class="reveal">
+    <div class="section-tag" style="justify-content:center;">Join Us</div>
+    <h2 class="section-title">Reserve Your <em>Experience</em></h2>
+    <p style="opacity:0.6;max-width:500px;margin:0 auto;">Secure your table and prepare for an evening that will linger in memory long after the last ember fades.</p>
+  </div>
+  <form class="reservation-form reveal" onsubmit="handleReservation(event)">
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="res-date" />
+    </div>
+    <div class="form-group">
+      <label>Time</label>
+      <select id="res-time">
+        <option>6:00 PM</option>
+        <option>6:30 PM</option>
+        <option>7:00 PM</option>
+        <option>7:30 PM</option>
+        <option>8:00 PM</option>
+        <option>8:30 PM</option>
+        <option>9:00 PM</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Guests</label>
+      <select id="res-guests">
+        <option>1 Guest</option>
+        <option selected>2 Guests</option>
+        <option>3 Guests</option>
+        <option>4 Guests</option>
+        <option>5+ Guests</option>
+      </select>
+    </div>
+    <button type="submit" class="btn-primary" style="white-space:nowrap;height:fit-content;">Reserve Now</button>
+  </form>
+  <!-- Confirmation message -->
+  <div id="res-confirm" style="display:none;margin-top:2rem;padding:1.5rem 2rem;background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.3);border-radius:4px;max-width:500px;margin-left:auto;margin-right:auto;text-align:center;">
+    <div style="font-size:1.5rem;margin-bottom:0.5rem;">🎉</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:0.5rem;">Reservation Confirmed!</div>
+    <div style="opacity:0.7;font-size:0.9rem;">We look forward to welcoming you to Ember. A confirmation has been sent to your email.</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <span class="nav-logo" style="display:block;margin-bottom:1rem;">EMBER</span>
+    <p>Where fire transforms the finest ingredients into an extraordinary dining experience. Michelin-starred excellence since 2019.</p>
+  </div>
+  <div class="footer-col">
+    <h4>Navigate</h4>
+    <ul>
+      <li><a href="#menu">Our Menu</a></li>
+      <li><a href="#story">Our Story</a></li>
+      <li><a href="#atmosphere">Atmosphere</a></li>
+      <li><a href="#reserve">Reservations</a></li>
+    </ul>
+  </div>
+  <div class="footer-col">
+    <h4>Visit Us</h4>
+    <ul>
+      <li><a href="#">12 Ember Lane, Mayfair</a></li>
+      <li><a href="#">London, W1K 5TF</a></li>
+      <li><a href="#">+44 20 7946 0123</a></li>
+      <li><a href="#">hello@ember-dining.com</a></li>
+    </ul>
+  </div>
+  <div class="footer-col">
+    <h4>Hours</h4>
+    <ul>
+      <li><a href="#">Tue–Thu: 6pm – 10pm</a></li>
+      <li><a href="#">Fri–Sat: 5:30pm – 11pm</a></li>
+      <li><a href="#">Sunday: 6pm – 9pm</a></li>
+      <li><a href="#">Monday: Closed</a></li>
+    </ul>
+  </div>
+</footer>
+<div class="footer-bottom">© 2026 EMBER Fine Dining. All rights reserved.</div>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const trail = document.getElementById('cursorTrail');
+  document.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX - 6 + 'px';
+    cursor.style.top = e.clientY - 6 + 'px';
+    setTimeout(() => {
+      trail.style.left = e.clientX - 20 + 'px';
+      trail.style.top = e.clientY - 20 + 'px';
+    }, 80);
+  });
+  document.querySelectorAll('a,button').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.style.transform = 'scale(2)');
+    el.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
+  });
+
+  // Ember particles
+  const particleContainer = document.getElementById('particles');
+  function createParticle() {
+    const p = document.createElement('div');
+    p.className = 'ember-particle';
+    p.style.left = (Math.random() * 80 + 10) + '%';
+    p.style.bottom = '10%';
+    p.style.animationDuration = (Math.random() * 3 + 2) + 's';
+    p.style.animationDelay = (Math.random() * 2) + 's';
+    const hue = Math.random() > 0.5 ? '#FF4500' : '#FFD700';
+    p.style.background = hue;
+    p.style.boxShadow = `0 0 6px ${hue}`;
+    particleContainer.appendChild(p);
+    setTimeout(() => p.remove(), 5000);
+  }
+  setInterval(createParticle, 300);
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Menu tabs
+  function switchTab(btn, cat) {
+    document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.menu-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('cat-' + cat).classList.add('active');
+  }
+
+  // Reservation
+  function handleReservation(e) {
+    e.preventDefault();
+    document.getElementById('res-confirm').style.display = 'block';
+    document.getElementById('res-confirm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Add button effect
+  document.querySelectorAll('.menu-add').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.textContent = '✓';
+      this.style.background = 'linear-gradient(135deg, #228B22, #006400)';
+      setTimeout(() => {
+        this.textContent = '+';
+        this.style.background = '';
+      }, 1500);
+    });
+  });
+
+  // Set default date to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('res-date').value = today;
+</script>
+</body>
+</html>
